@@ -147,7 +147,7 @@ func TestGetGrafanaAlertRules(t *testing.T) {
 		server.Close()
 	})
 
-	resp, err := client.GetAlertRules("grafana")
+	resp, err := client.GetAllAlertRules("grafana")
 
 	if err != nil {
 		t.Error(err)
@@ -155,5 +155,11 @@ func TestGetGrafanaAlertRules(t *testing.T) {
 
 	if len(resp["Namespace 1"]) <= 0 {
 		t.Error("Issue")
+	}
+
+	expected := map[string][]*RuleGroupConfig {
+		"Namespace 1": [
+
+		]
 	}
 }

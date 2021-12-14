@@ -1,5 +1,12 @@
 package gapi
 
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/url"
+)
+
 type RuleGroupConfig struct {
 	Interval string  `json:"interval"`
 	Name     string  `json:"name"`
@@ -47,15 +54,34 @@ type AlertRelativeTimeRange struct {
 	To   int64 `json:"to"`
 }
 
-// Fetch all alert rules for recipient
+// Fetch all alert rules for recipient in all namespaces
 // Recipient should be "grafana" for requests to be handled by grafana
 // and the numeric datasource id for requests to be forwarded to a datasource
-func (c *Client) GetAlertRules(recipient string) (map[string][]*RuleGroupConfig, error) {
+func (c *Client) GetAllAlertRules(recipient string) (map[string][]*RuleGroupConfig, error) {
 	rules := make(map[string][]*RuleGroupConfig)
-	err := c.request("GET", "/api/ruler/%s/api/v1/rules", nil, nil, &rules)
+
+	request_uri := fmt.Sprintf("/api/ruler/%s/api/v1/rules", recipient)
+	err := c.request("GET", request_uri, nil, nil, &rules)
 	if err != nil {
 		return rules, err
 	}
 
 	return rules, err
+}
+
+// Creates a new Namespace Alert Rule Group Config
+func (c *Client) NewRuleGroupConfig(recipient string, namespace string, ruleGroupConfig RuleGroupConfig) (*RuleGroupConfig, error) {
+	body, err := json.Marshal(ruleGroupConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	rgc := &RuleGroupConfig{}
+	request_uri := fmt.Sprintf("/api/ruler/%s/api/v1/rules/%s", recipient, url.QueryEscape(namespace))
+	err = c.request("POST", request_uri, nil, bytes.NewBuffer(body), &rgc)
+	if err != nil {
+		return nil, err
+	}
+
+	return rgc, err
 }
